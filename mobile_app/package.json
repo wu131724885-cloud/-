@@ -1,0 +1,21 @@
+{
+  "name": "garbage-detector-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mobile shell app for YOLO garbage detection web stream",
+  "scripts": {
+    "cap:sync": "npx cap sync",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.1.0",
+    "@capacitor/android": "^7.1.0",
+    "@capacitor/ios": "^7.1.0"
+  }
+}

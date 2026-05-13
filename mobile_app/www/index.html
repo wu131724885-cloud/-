@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Garbage Detector App</title>
+  <style>
+    :root {
+      --bg: #0b1117;
+      --panel: #13202d;
+      --line: #28465d;
+      --text: #ebf5ff;
+      --muted: #9eb5c9;
+      --ok: #20c997;
+      --warn: #f4b400;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: radial-gradient(circle at 20% 0%, #162634 0%, #0b1117 55%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    .toolbar {
+      padding: 10px;
+      background: color-mix(in srgb, var(--panel) 86%, black 14%);
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #0f1a24;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 14px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: #173047;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.primary {
+      background: linear-gradient(135deg, #1d725a, #249d78);
+      border-color: #2ab688;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .status {
+      font-size: 12px;
+      color: var(--warn);
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+  <!-- 手機殼首頁：輸入伺服器網址並嵌入監看頁。 -->
+  <div class="shell">
+    <div class="toolbar">
+      <div class="row">
+        <input id="url" placeholder="例如: http://192.168.0.10:8080/" value="">
+        <button id="reload">重整</button>
+        <button id="open" class="primary">連線</button>
+      </div>
+      <div class="hint">手機與執行 Python 的電腦必須在同一個 Wi-Fi。先開電腦端 main.py，再在這裡輸入 http://電腦IP:8080/。</div>
+      <div id="status" class="status">尚未連線</div>
+    </div>
+    <iframe id="viewer" title="Garbage Detector Web"></iframe>
+  </div>
+
+  <script>
+    const input = document.getElementById('url');
+    const viewer = document.getElementById('viewer');
+    const status = document.getElementById('status');
+    const STORAGE_KEY = 'detector_server_url';
+
+    function normalizeUrl(raw) {
+      // 自動補上尾端斜線，避免相對路徑解析問題。
+      const trimmed = String(raw || '').trim();
+      if (!trimmed) return '';
+      return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+    }
+
+    function probeServer(url) {
+      // 用 snapshot 影像測試可達性，不依賴 CORS。
+      return new Promise((resolve) => {
+        const img = new Image();
+        const timeoutId = setTimeout(() => {
+          img.src = '';
+          resolve(false);
+        }, 3500);
+
+        img.onload = () => {
+          clearTimeout(timeoutId);
+          resolve(true);
+        };
+
+        img.onerror = () => {
+          clearTimeout(timeoutId);
+          resolve(false);
+        };
+
+        img.src = `${url}snapshot?t=${Date.now()}`;
+      });
+    }
+
+    async function connect() {
+      // 使用者按下連線後，儲存網址並載入 iframe。
+      const url = normalizeUrl(input.value);
+      if (!url) {
+        status.textContent = '請先輸入伺服器網址';
+        status.style.color = 'var(--warn)';
+        return;
+      }
+
+      status.textContent = '連線測試中...';
+      status.style.color = 'var(--warn)';
+
+      const ok = await probeServer(url);
+      if (!ok) {
+        status.textContent = '連線失敗：請確認手機與電腦同網路、網址正確、電腦端 main.py 已啟動';
+        status.style.color = 'var(--warn)';
+        return;
+      }
+
+      try {
+        localStorage.setItem(STORAGE_KEY, url);
+      } catch (err) {
+        // localStorage blocked on some webviews; continue without persistence.
+      }
+
+      viewer.src = url;
+      status.textContent = `已連線: ${url}`;
+      status.style.color = 'var(--ok)';
+    }
+
+    function restore() {
+      // 啟動時優先載入上次成功連線的位址。
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          input.value = saved;
+          viewer.src = saved;
+          status.textContent = `已載入: ${saved}`;
+          status.style.color = 'var(--ok)';
+          return;
+        }
+      } catch (err) {
+        // Ignore and use default value.
+      }
+
+      status.textContent = '請輸入伺服器網址後按連線';
+      status.style.color = 'var(--warn)';
+    }
+
+    document.getElementById('open').addEventListener('click', connect);
+    document.getElementById('reload').addEventListener('click', () => {
+      if (viewer.src) {
+        viewer.src = viewer.src;
+        status.textContent = '已重整';
+        status.style.color = 'var(--ok)';
+      }
+    });
+
+    restore();
+  </script>
+</body>
+</html>
