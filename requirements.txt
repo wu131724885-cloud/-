@@ -1,0 +1,8 @@
+flask
+numpy<2
+opencv-python
+pyserial
+requests
+ultralytics
+waitress
+tflite-runtime
