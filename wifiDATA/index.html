@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>垃圾辨識即時畫面</title>
+  <style>
+    :root {
+      --bg: #0c1218;
+      --panel: #121b24;
+      --line: #274056;
+      --text: #e7f0f8;
+      --muted: #9fb4c8;
+      --accent: #20c997;
+      --warn: #f4b400;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: radial-gradient(circle at 20% 20%, #13202c 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      letter-spacing: 0.04em;
+      font-size: 28px;
+    }
+    .sub {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .card {
+      background: color-mix(in srgb, var(--panel) 90%, black 10%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+    #stream {
+      width: 100%;
+      display: block;
+      background: #000;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: #0f1821;
+    }
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #111f2b;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .pill b {
+      display: block;
+      color: var(--text);
+      margin-top: 4px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .counts {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      background: #132536;
+      border: 1px solid #24506e;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+    .ok { color: var(--accent); }
+    .warn { color: var(--warn); }
+    @media (max-width: 760px) {
+      .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 主視覺區：顯示串流畫面與即時狀態。 -->
+  <div class="wrap">
+    <h1>YOLO 垃圾辨識即時監看</h1>
+    <p class="sub">此畫面由 Python 主程式即時推送，顯示實際偵測結果與 Arduino 狀態。</p>
+
+    <div class="card">
+      <img id="stream" src="/stream" alt="即時偵測串流畫面">
+      <div class="meta">
+        <div class="pill">FPS<b id="fps">-</b></div>
+        <div class="pill">串流狀態<b id="status">starting</b></div>
+        <div class="pill">Arduino<b id="arduino">disconnected</b></div>
+        <div class="pill">最後更新<b id="updated">-</b></div>
+      </div>
+    </div>
+
+    <div class="counts" id="counts"></div>
+  </div>
+
+  <script>
+    // 把後端 counts 物件渲染成可讀的標籤列。
+    function updateCounts(counts) {
+      const box = document.getElementById('counts');
+      box.innerHTML = '';
+      const keys = Object.keys(counts || {}).sort();
+      if (!keys.length) {
+        box.innerHTML = '<span class="chip warn">目前沒有目標物件</span>';
+        return;
+      }
+      for (const key of keys) {
+        const chip = document.createElement('span');
+        chip.className = 'chip ok';
+        chip.textContent = `${key}: ${counts[key]}`;
+        box.appendChild(chip);
+      }
+    }
+
+    // 固定輪詢 /status，同步更新 FPS、Arduino 與辨識計數。
+    async function pollStatus() {
+      try {
+        const res = await fetch('/status', { cache: 'no-store' });
+        if (!res.ok) throw new Error('status failed');
+        const data = await res.json();
+
+        document.getElementById('fps').textContent = data.fps ?? '-';
+        document.getElementById('status').textContent = data.status || 'unknown';
+        document.getElementById('arduino').textContent = data.arduino || 'unknown';
+
+        if (data.updated) {
+          const dt = new Date(data.updated * 1000);
+          document.getElementById('updated').textContent = dt.toLocaleTimeString();
+        }
+
+        updateCounts(data.counts || {});
+      } catch (err) {
+        document.getElementById('status').textContent = 'status error';
+      }
+    }
+
+    // 先立即抓一次，再每 800ms 更新。
+    setInterval(pollStatus, 800);
+    pollStatus();
+  </script>
+</body>
+</html>

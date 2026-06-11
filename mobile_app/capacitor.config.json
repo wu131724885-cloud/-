@@ -1,0 +1,8 @@
+{
+  "appId": "com.project.garbagedetector",
+  "appName": "Garbage Detector",
+  "webDir": "www",
+  "server": {
+    "cleartext": true
+  }
+}

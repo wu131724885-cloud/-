@@ -1,0 +1,2 @@
+nohup: ignoring input
+偵測到另一個 main.py 已在執行，為避免重複占用 /dev/ttyACM0，本次啟動已取消。

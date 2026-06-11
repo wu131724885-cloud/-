@@ -1,0 +1,20 @@
+nohup: ignoring input
+載入 YOLO 模型中...
+YOLO 執行模式: auto model=yolov8n_int8.onnx
+YOLO 後處理參數: conf>=0.70 per-class-iou<=0.25 global-iou<=0.45 ignore-top<=0.22 bottle-fallback>=0.03@640 bottle-accept>=0.25 bottle-interval=3 max-total=24 max-per-class=8
+強制使用 yolov8n_int8.onnx，task=detect (後續以 track 推論)
+Loading /home/radxa/專題程式/yolov8n_int8.onnx for ONNX Runtime inference...
+Using ONNX Runtime 1.19.2 with CPUExecutionProvider
+/home/radxa/專題程式/.venv/lib/python3.9/site-packages/numpy/_core/getlimits.py:552: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/radxa/專題程式/.venv/lib/python3.9/site-packages/numpy/_core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/home/radxa/專題程式/.venv/lib/python3.9/site-packages/numpy/_core/getlimits.py:552: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/home/radxa/專題程式/.venv/lib/python3.9/site-packages/numpy/_core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+模型輸出類別數: 80
+已啟用垃圾類別數: 21 -> bottle, wine glass, cup, fork, knife, spoon, bowl, banana, apple, sandwich, orange, broccoli, carrot, pizza, donut, cake, mouse, remote, cell phone, scissors, toothbrush
+Loading /home/radxa/專題程式/yolov8n_int8.onnx for ONNX Runtime inference...
+Using ONNX Runtime 1.19.2 with CPUExecutionProvider
+ioctl(VIDIOC_QBUF): Bad file descriptor
