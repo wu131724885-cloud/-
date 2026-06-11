@@ -1,0 +1,7 @@
+.git_broken_20260611/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.log
+.main.py.lock
